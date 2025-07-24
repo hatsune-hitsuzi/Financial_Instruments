@@ -49,7 +49,7 @@ def fetch_option_data(expiration_code):
         print(f"请求失败: {response.status_code}")
         return None
 
-def plot_option_comparison(response_data, low_strike, high_strike):
+def plot_option_comparison(response_data, low_strike, high_strike, raw_date):
     if not response_data:
         print("无有效数据可绘制")
         return
@@ -115,7 +115,7 @@ def plot_option_comparison(response_data, low_strike, high_strike):
     ax1 = fig.add_subplot(gs[0], facecolor=bg_color)
     ax2 = fig.add_subplot(gs[1], facecolor=right_panel_color, sharey=ax1)
 
-    fig.suptitle('Gold option AUG 2025 option chart',
+    fig.suptitle('Gold option' + raw_date + 'option chart',
                  fontsize=16, y=0.95, color=text_color)
 
     # ========== 固定比例尺设置 ==========
@@ -247,7 +247,7 @@ def main():
     option_data = fetch_option_data(expiration_code)
     if option_data:
         # 绘制图表
-        plot_option_comparison(option_data, low_strike, high_strike)
+        plot_option_comparison(option_data, low_strike, high_strike,raw_date)
     else:
         print("无法获取数据，请检查curl命令是否正确")
 
