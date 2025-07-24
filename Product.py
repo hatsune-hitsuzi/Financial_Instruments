@@ -18,9 +18,9 @@ def convert_to_expiration_code(date_str):
         '09': 'U', '10': 'V', '11': 'X', '12': 'Z'
     }
     try:
-        year = date_str[:4]
+        year = date_str[2:4]
         month = date_str[4:]
-        code = month_codes[month] + year[-1]
+        code = month_codes[month] + year
         return code
     except (KeyError, ValueError, IndexError):
         print("输入格式错误，应为形如 '202508' 的年月格式")
