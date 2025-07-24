@@ -1,7 +1,7 @@
 import requests
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator, FuncFormatter
-import  datetime
+from datetime import datetime, timedelta
 
 def parse_float(value):
     if isinstance(value, (int, float)):
@@ -11,20 +11,29 @@ def parse_float(value):
     except (ValueError, TypeError):
         return 0.0
 
+def convert_to_expiration_code(date_str):
+    month_codes = {
+        '01': 'F', '02': 'G', '03': 'H', '04': 'J',
+        '05': 'K', '06': 'M', '07': 'N', '08': 'Q',
+        '09': 'U', '10': 'V', '11': 'X', '12': 'Z'
+    }
+    try:
+        year = date_str[:4]
+        month = date_str[4:]
+        code = month_codes[month] + year[-1]
+        return code
+    except (KeyError, ValueError, IndexError):
+        print("输入格式错误，应为形如 '202508' 的年月格式")
+        return None
+
 # TODO: 看样子reporttype可能会每日改动导致硬编码请求失效,建议直接去:https://www.cmegroup.com/markets/metals/precious/gold.volume.options.html看看请求就好,有空再更新~
-def fetch_option_data():
-    # 中国时间
-    china_now = datetime.datetime.now()
-    # 美国时间(硬减一天)懒得算开盘时间
-    us_now = china_now - datetime.timedelta(hours=24)
-    # 获取美国时间的日期字符串
-    tradeDate = us_now.strftime('%Y%m%d')
+def fetch_option_data(expiration_code):
     """从CME Group获取期权数据"""
     url = 'https://www.cmegroup.com/CmeWS/mvc/Volume/Options/Details'
     params = {
         'productid': '192',
-        'tradedate': tradeDate,
-        'expirationcode': 'Q25',
+        'tradedate': (datetime.now() - timedelta(days=1)).strftime('%Y%m%d'),
+        'expirationcode': expiration_code,
         'reporttype': 'P'
     }
     headers = {
@@ -210,7 +219,7 @@ def plot_option_comparison(response_data, low_strike, high_strike):
     plt.subplots_adjust(top=0.9)
 
     # 保存图表
-    filename = f"gold_options_{datetime.date.today().strftime('%Y-%m-%d')}.png"
+    filename = f"gold_options_{datetime.now().strftime('%Y%m%d')}.png"
     plt.savefig(filename, dpi=300, bbox_inches='tight', facecolor=bg_color)
     print(f"图表已保存为: {filename}")
 
@@ -228,11 +237,14 @@ def main():
     except ValueError:
         print("输入无效，必须是数字")
         return
-
+    # 获取到期时间
+    raw_date = input("请输入期权到期年月 (格式如 202508)：").strip()
+    expiration_code = convert_to_expiration_code(raw_date)
+    if not expiration_code:
+        return
     # 获取数据
     print("\n正在获取数据...")
-    option_data = fetch_option_data()
-
+    option_data = fetch_option_data(expiration_code)
     if option_data:
         # 绘制图表
         plot_option_comparison(option_data, low_strike, high_strike)
