@@ -2,6 +2,8 @@ import requests
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator, FuncFormatter
 from datetime import datetime, timedelta
+import sys
+from art import text2art
 
 def parse_float(value):
     if isinstance(value, (int, float)):
@@ -226,31 +228,40 @@ def plot_option_comparison(response_data, low_strike, high_strike, raw_date):
     plt.show()
 
 
-def main():
-    print("小羊仿制派派期权图")
-    print("数据来源:CME芝加哥商品交易所")
+def banner():
+    print("小羊黄金期权分析")
+    print("Data Source: CME Chicago Mercantile Exchange,国内用户请使用魔法")
+    print("Contact")
+    print("GitHub: https://github.com/hatsune-hitsuzi/Financial_Instruments")
+    print("Mail: 534622443abc@gmail.com")
     print("=" * 40)
-    # 获取行权价范围
-    try:
-        low_strike = float(input("请输入最低行权价XAU/USD：").strip())
-        high_strike = float(input("请输入最高行权价XAU/USD：").strip())
-    except ValueError:
-        print("输入无效，必须是数字")
-        return
-    # 获取到期时间
+
+def get_float(prompt):
+    while True:
+        try:
+            return float(input(prompt).strip())
+        except ValueError:
+            print("⚠️ 输入无效，请输入数字！")
+
+def main():
+    banner()
+    low_strike = get_float("请输入最低行权价 XAU/USD：")
+    high_strike = get_float("请输入最高行权价 XAU/USD：")
     raw_date = input("请输入期权到期年月 (格式如 202508)：").strip()
     expiration_code = convert_to_expiration_code(raw_date)
     if not expiration_code:
-        return
-    # 获取数据
-    print("\n正在获取数据...")
-    option_data = fetch_option_data(expiration_code)
-    if option_data:
-        # 绘制图表
-        plot_option_comparison(option_data, low_strike, high_strike,raw_date)
-    else:
-        print("无法获取数据，请检查curl命令是否正确")
+        print("⚠️ 到期年月格式不正确，退出。")
+        sys.exit(1)
 
+    print("\n正在获取数据…请稍候...")
+    option_data = fetch_option_data(expiration_code)
+    if not option_data:
+        print("❌ 无法获取数据，请检查网络或命令调用是否正确。")
+        sys.exit(1)
+
+    plot_option_comparison(option_data, low_strike, high_strike, raw_date)
+    print("\n" + "=" * 40)
+    print("© 2025 hatsune‑hitsuzi. All rights reserved.")
 
 if __name__ == "__main__":
     main()
