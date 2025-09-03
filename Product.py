@@ -125,9 +125,13 @@ def plot_option_comparison(response_data, low_strike, high_strike, raw_date):
     y_min, y_max = low_strike, high_strike
     y_major_locator = MultipleLocator(20)  # 每20一个主刻度
 
-    # 横坐标设置 (价格变化)
-    x_max = 600  # 横坐标最大绝对值
-    x_major_locator = MultipleLocator(100)  # 每100一个主刻度
+    # 横坐标设置 (价格变化) —— 动态范围
+    max_change = max(
+        max([abs(x) for x in calls_changes], default=0),
+        max([abs(x) for x in puts_changes], default=0)
+    )
+    x_max = max(600, int(max_change * 1.1))  # 至少600，或者自动扩展
+    x_major_locator = MultipleLocator(100)
 
     # ========== Calls图表 (左侧) ==========
     if calls_data:
