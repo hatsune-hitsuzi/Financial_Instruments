@@ -3,7 +3,8 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator, FuncFormatter
 from datetime import datetime, timedelta
 import sys
-from art import text2art
+from pandas.tseries.holiday import USFederalHolidayCalendar
+from pandas.tseries.offsets import CustomBusinessDay
 
 def parse_float(value):
     if isinstance(value, (int, float)):
@@ -28,13 +29,33 @@ def convert_to_expiration_code(date_str):
         print("输入格式错误，应为形如 '202508' 的年月格式")
         return None
 
+def get_previous_us_trading_date():
+    """
+    获取美国上一个交易日的日期（YYYYMMDD格式）
+    排除周末和美国联邦假日
+    """
+    # 获取当前日期（美国东部时间）
+    now_utc = datetime.datetime.utcnow()
+    eastern = datetime.timezone(datetime.timedelta(hours=-5))  # 美国东部时间UTC-5
+    now_est = now_utc.astimezone(eastern)
+    current_date = now_est.date()
+
+    # 创建美国交易日历（排除周末和联邦假日）
+    us_bday = CustomBusinessDay(calendar=USFederalHolidayCalendar())
+
+    # 计算上一个交易日
+    previous_trading_date = current_date - us_bday
+
+    # 格式化
+    return previous_trading_date.strftime('%Y%m%d')
+
 # TODO: 看样子reporttype可能会每日改动导致硬编码请求失效,建议直接去:https://www.cmegroup.com/markets/metals/precious/gold.volume.options.html看看请求就好,有空再更新~
 def fetch_option_data(expiration_code):
     """从CME Group获取期权数据"""
     url = 'https://www.cmegroup.com/CmeWS/mvc/Volume/Options/Details'
     params = {
         'productid': '192',
-        'tradedate': (datetime.now() - timedelta(days=1)).strftime('%Y%m%d'),
+        'tradedate': get_previous_us_trading_date,
         'expirationcode': expiration_code,
         'reporttype': 'P'
     }
